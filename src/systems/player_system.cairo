@@ -59,7 +59,7 @@ mod player_system {
                     let mut updated_referrer = referrer_player;
                     updated_referrer.friends_count += 1;
                     
-                    world.write_model((friend_entry, updated_referrer));
+                    world.write_model(@Player);
                 }
             }
             
@@ -69,10 +69,11 @@ mod player_system {
                 address: caller
             };
             
-            set!(world, (player, username_mapping, stats));
+            world.write_model(@Player);
             
             // Emit event
-            emit!(world, PlayerRegistered { player: caller, username });
+            // emit!(world, PlayerRegistered { player: caller, username });
+            world.emit_event(@PlayerRegistered { player: caller, username });
         }
     }
 }
