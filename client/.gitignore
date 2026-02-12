@@ -49,5 +49,7 @@ modules/controller/android/.gradle/
 # modules/controller/Controller.xcframework/
 # modules/controller/android/src/main/jniLibs/
 .cxx/
+build/
+.cxx/
 **/.cxx/
 build/
