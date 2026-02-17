@@ -48,3 +48,8 @@ modules/controller/android/.gradle/
 # Pre-built native binaries — use Git LFS for these
 # modules/controller/Controller.xcframework/
 # modules/controller/android/src/main/jniLibs/
+
+# Additional build artifacts
+.cxx/
+**/.cxx/
+build/
