@@ -12,7 +12,7 @@ import {
   Modal,
 } from 'react-native';
 import { NavigationContext, type GameMode } from '../../App';
-import { useSession } from '../hooks/SessionContext';
+import { useDojo } from '../dojo/DojoContext';
 import { usePlayer } from '../hooks/usePlayer';
 import { useGameActions, type DailyStatus } from '../hooks/useGameActions';
 import { colors, fontSize, fontWeight, spacing, radius, grid } from '../theme';
@@ -242,7 +242,7 @@ function truncateAddress(addr: string): string {
 export function GameBoardScreen() {
   const { goBack, params } = useContext(NavigationContext);
   const mode: GameMode = (params?.mode as GameMode) || 'classic';
-  const { sessionMetadata } = useSession();
+  const { address } = useDojo();
   const { player, refetch: refetchPlayer } = usePlayer();
   const {
     startGame,
@@ -452,7 +452,7 @@ export function GameBoardScreen() {
               <Text style={styles.pillDotText}>C</Text>
             </View>
             <Text style={styles.pillText}>
-              {sessionMetadata.username || truncateAddress(sessionMetadata.address || '0x...')}
+              {truncateAddress(address || '0x...')}
             </Text>
           </View>
 

@@ -9,7 +9,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { useSession } from '../hooks/SessionContext';
+// import { useSession } from '../hooks/SessionContext'; // Restore for testnet/Cartridge
 import { NavigationContext } from '../../App';
 import { colors, fontSize, fontWeight, spacing, radius } from '../theme';
 
@@ -29,19 +29,14 @@ const LOGO_LETTERS = [
 ];
 
 export function LandingScreen() {
-  const { isLoading, error, connect, isConnected } = useSession();
+  // Restore useSession() for testnet/Cartridge
+  const isLoading = false;
+  const error: string | null = null;
   const { navigate } = useContext(NavigationContext);
 
   const handleConnect = async () => {
-    await connect();
+    navigate('dashboard' as any);
   };
-
-  // Navigate to dashboard once connected
-  React.useEffect(() => {
-    if (isConnected) {
-      navigate('dashboard');
-    }
-  }, [isConnected]);
 
   return (
     <View style={styles.container}>

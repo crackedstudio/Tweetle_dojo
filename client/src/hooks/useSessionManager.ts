@@ -16,7 +16,7 @@ import {
   SESSION_POLICIES,
   PLAYER_SYSTEM_CONTRACT,
 } from '../constants';
-import { fetchPlayer, pollPlayerRegistered } from '../dojo/torii';
+import { fetchPlayer, pollPlayerRegistered } from '../dojo/apollo';
 
 const STORAGE_KEY = '@tweetle/session_private_key';
 const CARTRIDGE_SESSION_URL = 'https://x.cartridge.gg/session';

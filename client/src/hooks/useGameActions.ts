@@ -1,8 +1,8 @@
 import { useCallback } from 'react';
 import { useDojo } from '../dojo/DojoContext';
-import { useSession } from './SessionContext';
 import { stringToFelt, feltToString, decodeHints, WINNING_HINT } from '../dojo/models';
 import {
+  apolloClient,
   pollPlayerRegistered,
   fetchLatestClassicGame,
   pollNewClassicGame,
@@ -10,9 +10,6 @@ import {
   pollDailyGame,
   pollDailyJoined,
   pollNewDailyAttempt,
-} from '../dojo/torii';
-import {
-  apolloClient,
   GET_LATEST_CLASSIC_GAME,
   GET_GAME_ATTEMPTS,
   GET_DAILY_ATTEMPT_COUNT,
@@ -51,33 +48,34 @@ export interface DailyStatus {
 }
 
 export function useGameActions() {
-  const { client } = useDojo();
-  const { sessionMetadata } = useSession();
-  const playerAddress = sessionMetadata.address!;
+  const { client, account, address: playerAddress } = useDojo();
 
   const registerPlayer = useCallback(
     async (username: string) => {
+      if (!client || !account || !playerAddress) return;
       const usernameFelt = stringToFelt(username);
-      await client.playerSystem.register(usernameFelt, ZERO_ADDRESS);
+      await client.player_system.registerPlayer(account, usernameFelt, ZERO_ADDRESS);
       await pollPlayerRegistered(playerAddress);
     },
-    [client, playerAddress]
+    [client, account, playerAddress]
   );
 
   // ── Classic Mode ──
 
   const startGame = useCallback(async (): Promise<number> => {
+    if (!client || !account || !playerAddress) throw new Error('Dojo not initialized');
     const currentGame = await fetchLatestClassicGame(playerAddress);
     const currentGameId = currentGame?.game_id ?? 0;
-    await client.actions.startGame();
+    await client.actions.startGame(account);
     const newGame = await pollNewClassicGame(playerAddress, currentGameId);
     return newGame.game_id;
-  }, [client, playerAddress]);
+  }, [client, account, playerAddress]);
 
   const submitGuess = useCallback(
     async (gameId: number, word: string, currentAttemptCount: number): Promise<GuessResult> => {
+      if (!client || !account || !playerAddress) throw new Error('Dojo not initialized');
       const wordFelt = stringToFelt(word.toLowerCase());
-      await client.actions.submitGuess(gameId, wordFelt);
+      await client.actions.submitGuess(account, gameId, wordFelt);
       const attempt = await pollNewAttempt(playerAddress, gameId, currentAttemptCount);
 
       const hintPacked = Number(attempt.hint_packed);
@@ -87,10 +85,11 @@ export function useGameActions() {
 
       return { hintPacked, tileStates: decodeHints(hintPacked), isWin, isLoss, attemptNumber };
     },
-    [client, playerAddress]
+    [client, account, playerAddress]
   );
 
   const resumeOrStartGame = useCallback(async (): Promise<ResumedGameState> => {
+    if (!playerAddress) throw new Error('Dojo not initialized');
     const { data } = await apolloClient.query<GetLatestClassicGameResponse>({
       query: GET_LATEST_CLASSIC_GAME,
       variables: { player: playerAddress },
@@ -132,6 +131,7 @@ export function useGameActions() {
   }, []);
 
   const checkDailyStatus = useCallback(async (): Promise<DailyStatus> => {
+    if (!playerAddress) throw new Error('Dojo not initialized');
     const gameId = getTodayGameId();
     const gameIdHex = '0x' + gameId.toString(16);
     const expiresAt = (gameId + 1) * SECONDS_PER_DAY;
@@ -185,21 +185,23 @@ export function useGameActions() {
   }, [playerAddress, getTodayGameId]);
 
   const startDailyGame = useCallback(async (): Promise<number> => {
+    if (!client || !account || !playerAddress) throw new Error('Dojo not initialized');
     const gameId = getTodayGameId();
 
-    await client.dailyGame.getOrCreate();
+    await client.daily_game.getOrCreateDailyGame(account);
     await pollDailyGame(gameId);
 
-    await client.dailyGame.join(gameId);
+    await client.daily_game.joinDailyGame(account, gameId);
     await pollDailyJoined(playerAddress, gameId);
 
     return gameId;
-  }, [client, playerAddress, getTodayGameId]);
+  }, [client, account, playerAddress, getTodayGameId]);
 
   const submitDailyGuess = useCallback(
     async (gameId: number, word: string, currentAttemptCount: number): Promise<GuessResult> => {
+      if (!client || !account || !playerAddress) throw new Error('Dojo not initialized');
       const wordFelt = stringToFelt(word.toLowerCase());
-      await client.dailyGame.submitGuess(gameId, wordFelt);
+      await client.daily_game.submitDailyGuess(account, gameId, wordFelt);
       const attempt = await pollNewDailyAttempt(playerAddress, gameId, currentAttemptCount);
 
       const hintPacked = Number(attempt.hint_packed);
@@ -209,7 +211,7 @@ export function useGameActions() {
 
       return { hintPacked, tileStates: decodeHints(hintPacked), isWin, isLoss, attemptNumber };
     },
-    [client, playerAddress]
+    [client, account, playerAddress]
   );
 
   return {

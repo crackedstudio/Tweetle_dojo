@@ -318,3 +318,140 @@ export interface GetDailyAttemptsResponse {
     edges: Array<{ node: DailyAttemptNode }>;
   };
 }
+
+// ── Polling Helpers ──
+
+async function poll<T>(
+  queryFn: () => Promise<T | null>,
+  maxAttempts = 40,
+  intervalMs = 2000,
+): Promise<T> {
+  for (let i = 0; i < maxAttempts; i++) {
+    const result = await queryFn();
+    if (result !== null) return result;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  throw new Error('Torii polling timed out');
+}
+
+export async function fetchPlayer(address: string): Promise<PlayerNode | null> {
+  const { data } = await apolloClient.query<GetPlayerResponse>({
+    query: GET_PLAYER,
+    variables: { address },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoPlayerModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollPlayerRegistered(address: string) {
+  return poll(() => fetchPlayer(address));
+}
+
+export async function fetchLatestClassicGame(player: string): Promise<ClassicGameNode | null> {
+  const { data } = await apolloClient.query<GetLatestClassicGameResponse>({
+    query: GET_LATEST_CLASSIC_GAME,
+    variables: { player },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoClassicGameModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollNewClassicGame(player: string, afterGameId: number) {
+  return poll(async () => {
+    const game = await fetchLatestClassicGame(player);
+    if (game && Number(game.game_id) > afterGameId) return game;
+    return null;
+  });
+}
+
+const GET_LATEST_ATTEMPT = gql`
+  query GetLatestAttempt($player: String!, $gameId: String!) {
+    tweetleDojoClassicAttemptModels(
+      where: { player: $player, game_id: $gameId }
+      order: { field: ATTEMPT_NUMBER, direction: DESC }
+      first: 1
+    ) {
+      edges {
+        node { player game_id attempt_number word hint_packed }
+      }
+    }
+  }
+`;
+
+async function fetchLatestAttempt(player: string, gameId: number): Promise<ClassicAttemptNode | null> {
+  const { data } = await apolloClient.query<GetGameAttemptsResponse>({
+    query: GET_LATEST_ATTEMPT,
+    variables: { player, gameId: '0x' + gameId.toString(16) },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoClassicAttemptModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollNewAttempt(player: string, gameId: number, afterAttempt: number) {
+  return poll(async () => {
+    const attempt = await fetchLatestAttempt(player, gameId);
+    if (attempt && Number(attempt.attempt_number) > afterAttempt) return attempt;
+    return null;
+  });
+}
+
+async function fetchDailyGame(gameId: number): Promise<DailyGameNode | null> {
+  const { data } = await apolloClient.query<GetDailyGameResponse>({
+    query: GET_DAILY_GAME,
+    variables: { gameId: '0x' + gameId.toString(16) },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoDailyGameModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollDailyGame(gameId: number) {
+  return poll(() => fetchDailyGame(gameId));
+}
+
+async function fetchDailyAttemptCount(player: string, gameId: number): Promise<DailyAttemptCountNode | null> {
+  const { data } = await apolloClient.query<GetDailyAttemptCountResponse>({
+    query: GET_DAILY_ATTEMPT_COUNT,
+    variables: { player, gameId: '0x' + gameId.toString(16) },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoDailyAttemptCountModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollDailyJoined(player: string, gameId: number) {
+  return poll(async () => {
+    const ac = await fetchDailyAttemptCount(player, gameId);
+    if (ac && ac.has_joined) return ac;
+    return null;
+  });
+}
+
+const GET_LATEST_DAILY_ATTEMPT = gql`
+  query GetLatestDailyAttempt($player: String!, $gameId: String!) {
+    tweetleDojoDailyAttemptModels(
+      where: { player: $player, game_id: $gameId }
+      order: { field: ATTEMPT_NUMBER, direction: DESC }
+      first: 1
+    ) {
+      edges {
+        node { player game_id attempt_number word hint_packed }
+      }
+    }
+  }
+`;
+
+async function fetchLatestDailyAttempt(player: string, gameId: number): Promise<DailyAttemptNode | null> {
+  const { data } = await apolloClient.query<GetDailyAttemptsResponse>({
+    query: GET_LATEST_DAILY_ATTEMPT,
+    variables: { player, gameId: '0x' + gameId.toString(16) },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoDailyAttemptModels?.edges?.[0]?.node ?? null;
+}
+
+export async function pollNewDailyAttempt(player: string, gameId: number, afterAttempt: number) {
+  return poll(async () => {
+    const attempt = await fetchLatestDailyAttempt(player, gameId);
+    if (attempt && Number(attempt.attempt_number) > afterAttempt) return attempt;
+    return null;
+  });
+}

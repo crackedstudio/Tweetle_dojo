@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationContext } from '../../App';
-import { useSession } from '../hooks/SessionContext';
+import { useDojo } from '../dojo/DojoContext';
 import { usePlayer, getLevel, LEVELS } from '../hooks/usePlayer';
 import {
   apolloClient,
@@ -72,12 +72,10 @@ function StatCard({ value, label, accent }: { value: string; label: string; acce
 
 export function ProfileScreen() {
   const { navigate } = useContext(NavigationContext);
-  const { sessionMetadata } = useSession();
+  const { address: playerAddress } = useDojo();
   const { player, loading: playerLoading } = usePlayer();
   const [stats, setStats] = useState<ProfileStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
-
-  const playerAddress = sessionMetadata.address;
 
   const fetchStats = useCallback(async () => {
     if (!playerAddress) return;
@@ -136,8 +134,8 @@ export function ProfileScreen() {
   const points = player?.points ?? 0;
   const level = getLevel(points);
   const { next, progress, xpNeeded } = getNextLevel(points);
-  const username = player?.username || sessionMetadata?.username || 'Player';
-  const address = sessionMetadata?.address || '';
+  const username = player?.username || 'Player';
+  const address = playerAddress || '';
 
   const classicGames = player?.classicGameCount ?? 0;
   const classicWins = stats?.classicWins ?? 0;

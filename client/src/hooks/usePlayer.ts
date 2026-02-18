@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from './SessionContext';
+import { useDojo } from '../dojo/DojoContext';
 import { feltToString } from '../dojo/models';
 import {
   apolloClient,
@@ -41,8 +41,7 @@ export interface PlayerData {
 }
 
 export function usePlayer() {
-  const { sessionMetadata } = useSession();
-  const address = sessionMetadata.address;
+  const { address } = useDojo();
 
   const [player, setPlayer] = useState<PlayerData | null>(null);
   const [loading, setLoading] = useState(true);

@@ -8,7 +8,7 @@ import {
   Platform,
   Image,
 } from 'react-native';
-import { useSession } from '../hooks/SessionContext';
+import { useDojo } from '../dojo/DojoContext';
 import { usePlayer } from '../hooks/usePlayer';
 import { NavigationContext } from '../../App';
 import { colors, fontSize, fontWeight, spacing, radius } from '../theme';
@@ -23,7 +23,7 @@ function truncateAddress(addr: string): string {
 }
 
 export function DashboardScreen() {
-  const { sessionMetadata, isConnected, disconnect } = useSession();
+  const { address } = useDojo();
   const { navigate, goBack } = useContext(NavigationContext);
   const { player } = usePlayer();
 
@@ -42,16 +42,14 @@ export function DashboardScreen() {
           <View style={{ width: 40 }} />
         </View>
 
-        <TouchableOpacity style={styles.walletBadge} onPress={isConnected ? disconnect : undefined}>
+        <View style={styles.walletBadge}>
           <View style={styles.walletIcon}>
-            <Text style={styles.walletIconText}>C</Text>
+            <Text style={styles.walletIconText}>K</Text>
           </View>
           <Text style={styles.walletText}>
-            {isConnected
-              ? sessionMetadata.username || truncateAddress(sessionMetadata.address || '')
-              : 'Not connected'}
+            {player?.username || truncateAddress(address || '')}
           </Text>
-        </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView

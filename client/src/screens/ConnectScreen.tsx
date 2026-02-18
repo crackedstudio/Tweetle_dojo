@@ -6,10 +6,13 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useSession } from '../hooks/SessionContext';
+// import { useSession } from '../hooks/SessionContext'; // Restore for testnet/Cartridge
 
 export function ConnectScreen() {
-  const { isLoading, error, connect } = useSession();
+  // Restore useSession() for testnet/Cartridge
+  const isLoading = false;
+  const error: string | null = null;
+  const connect = () => {};
 
   return (
     <View style={styles.container}>

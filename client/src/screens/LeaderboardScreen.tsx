@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { NavigationContext } from '../../App';
-import { useSession } from '../hooks/SessionContext';
+import { useDojo } from '../dojo/DojoContext';
 import { feltToString } from '../dojo/models';
 import { getLevel } from '../hooks/usePlayer';
 import {
@@ -79,8 +79,7 @@ function PlayerRow({ player, isCurrentUser }: { player: LeaderboardEntry; isCurr
 
 export function LeaderboardScreen() {
   const { navigate, goBack } = useContext(NavigationContext);
-  const { sessionMetadata } = useSession();
-  const currentAddress = sessionMetadata.address;
+  const { address: currentAddress } = useDojo();
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
 

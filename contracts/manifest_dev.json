@@ -33,7 +33,7 @@
   },
   "contracts": [
     {
-      "address": "0x6cf4da715e3b6b7cf0ca008498ac6aef23d11f9a11b3f2f1297e8583ca4ce28",
+      "address": "0x27d20c0a58a8058b56f57fdd1673b8dcf3ed4a5ac108f163a22738247810604",
       "class_hash": "0x63fff3a0822a83857f7fb803e77efe779f488d063515c61f706bd9261503ce8",
       "init_calldata": [],
       "tag": "tweetle_dojo-actions",
@@ -45,7 +45,7 @@
       ]
     },
     {
-      "address": "0x26d84b087e28590c437cbafe17c5589c9f1899a5ba1563e4dfb5728715df4a6",
+      "address": "0x6cd9a623272bb275fb91ad3c96a788f945ae52793a87a7a98c131027ccca4f3",
       "class_hash": "0x54243a2feae30f003b52a78afcd9faf1e038ab14b3292d2aab738ab50937e32",
       "init_calldata": [],
       "tag": "tweetle_dojo-daily_game",
