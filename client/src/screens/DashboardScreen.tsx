@@ -172,6 +172,25 @@ export function DashboardScreen() {
             </View>
           </TouchableOpacity>
         </View>
+
+        {/* Tournament Mode */}
+        <TouchableOpacity
+          style={styles.tournamentCard}
+          onPress={() => navigate('tournaments' as any)}
+          activeOpacity={0.8}
+        >
+          <View style={styles.tournamentAccent} />
+          <View style={styles.tournamentContent}>
+            <Text style={styles.tournamentIcon}>🏆</Text>
+            <View style={styles.tournamentInfo}>
+              <Text style={styles.tournamentTitle}>Tournament Mode</Text>
+              <Text style={styles.tournamentDesc}>Compete with ZK-verified guesses</Text>
+            </View>
+            <View style={[styles.modePlayPill, styles.modePlayPillAccent]}>
+              <Text style={styles.modePlayTextAccent}>View</Text>
+            </View>
+          </View>
+        </TouchableOpacity>
       </ScrollView>
 
       <TabBar activeTab="dashboard" onNavigate={(tab) => navigate(tab as any)} />
@@ -458,4 +477,39 @@ const styles = StyleSheet.create({
     fontFamily: fontFamily.bodySemiBold,
   },
 
+  // ── Tournament Card ──
+  tournamentCard: {
+    backgroundColor: colors.bg.surface,
+    borderRadius: radius.lg,
+    marginBottom: spacing.xl,
+    borderWidth: 1,
+    borderColor: colors.brand.primary,
+    overflow: 'hidden',
+  },
+  tournamentAccent: {
+    height: 3,
+    backgroundColor: colors.brand.primary,
+  },
+  tournamentContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: spacing.base,
+    gap: spacing.md,
+  },
+  tournamentIcon: {
+    fontSize: 28,
+  },
+  tournamentInfo: {
+    flex: 1,
+  },
+  tournamentTitle: {
+    color: colors.text.primary,
+    fontSize: fontSize.base,
+    fontFamily: fontFamily.heading,
+    marginBottom: 2,
+  },
+  tournamentDesc: {
+    color: colors.text.secondary,
+    fontSize: fontSize.xs,
+  },
 });
