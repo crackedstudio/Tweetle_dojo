@@ -1,0 +1,6 @@
+[package]
+name = "tweetle_commitment"
+type = "bin"
+authors = [""]
+
+[dependencies]
