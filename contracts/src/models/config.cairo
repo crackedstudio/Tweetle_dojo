@@ -22,4 +22,5 @@ pub struct TournamentConfig {
     pub platform_fee_bps: u16,          // Platform fee in basis points (e.g. 500 = 5%)
     pub game_master: ContractAddress,   // Who can create tournaments
     pub fee_recipient: ContractAddress,  // Where platform fees go
+    pub verifier_address: ContractAddress, // Garaga ZK proof verifier contract
 }

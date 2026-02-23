@@ -8,10 +8,12 @@ import { DashboardScreen } from './src/screens/DashboardScreen';
 import { GameBoardScreen } from './src/screens/GameBoardScreen';
 import { LeaderboardScreen } from './src/screens/LeaderboardScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
+import { TournamentListScreen } from './src/screens/TournamentListScreen';
+import { TournamentGameScreen } from './src/screens/TournamentGameScreen';
 import { colors } from './src/theme';
 
-type Screen = 'splash' | 'dashboard' | 'gameboard' | 'leaderboard' | 'profile';
-export type GameMode = 'classic' | 'daily';
+type Screen = 'splash' | 'dashboard' | 'gameboard' | 'leaderboard' | 'profile' | 'tournaments' | 'tournament-game';
+export type GameMode = 'classic' | 'daily' | 'tournament';
 
 export const NavigationContext = React.createContext<{
   navigate: (screen: Screen, params?: Record<string, any>) => void;
@@ -55,6 +57,8 @@ function Router() {
       {currentScreen === 'gameboard' && <GameBoardScreen />}
       {currentScreen === 'leaderboard' && <LeaderboardScreen />}
       {currentScreen === 'profile' && <ProfileScreen />}
+      {currentScreen === 'tournaments' && <TournamentListScreen />}
+      {currentScreen === 'tournament-game' && <TournamentGameScreen />}
     </NavigationContext.Provider>
   );
 }

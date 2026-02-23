@@ -7,7 +7,9 @@ mod tests {
         spawn_test_world, NamespaceDef, TestResource, ContractDefTrait, ContractDef,
     };
     use starknet::ContractAddress;
+    use core::num::traits::Zero;
 
+    use super::mock_zk_verifier;
     use tweetle_dojo::models::tournament::{
         Tournament, TournamentEntry, TournamentAttempt, TournamentRanking, TournamentStatus,
         m_Tournament, m_TournamentEntry, m_TournamentAttempt, m_TournamentRanking,
@@ -17,8 +19,8 @@ mod tests {
         tournament_manager, ITournamentManagerDispatcher, ITournamentManagerDispatcherTrait,
     };
 
-    // All correct clue: 2*81 + 2*27 + 2*9 + 2*3 + 2 = 242
-    const ALL_CORRECT_CLUE: u16 = 242;
+    // All correct clue: 2*256 + 2*64 + 2*16 + 2*4 + 2 = 682 (base-4 encoding)
+    const ALL_CORRECT_CLUE: u16 = 682;
 
     const GAME_MASTER: felt252 = 0x1111;
     const FEE_RECIPIENT: felt252 = 0x9999;
@@ -26,9 +28,12 @@ mod tests {
     const PLAYER_2: felt252 = 0x3333;
     const PLAYER_3: felt252 = 0x4444;
 
+    // Mock commitment used in tests (must match what mock verifier returns)
+    const MOCK_COMMITMENT: felt252 = 0xABCDEF;
+
     fn namespace_def() -> NamespaceDef {
         NamespaceDef {
-            namespace: "tweetle_revamp",
+            namespace: "tweetle_dojo",
             resources: [
                 TestResource::Model(m_Tournament::TEST_CLASS_HASH),
                 TestResource::Model(m_TournamentEntry::TEST_CLASS_HASH),
@@ -50,8 +55,8 @@ mod tests {
 
     fn contract_defs() -> Span<ContractDef> {
         [
-            ContractDefTrait::new(@"tweetle_revamp", @"tournament_manager")
-                .with_writer_of([dojo::utils::bytearray_hash(@"tweetle_revamp")].span()),
+            ContractDefTrait::new(@"tweetle_dojo", @"tournament_manager")
+                .with_writer_of([dojo::utils::bytearray_hash(@"tweetle_dojo")].span()),
         ].span()
     }
 
@@ -70,21 +75,59 @@ mod tests {
         let (addr, _) = world.dns(@"tournament_manager").unwrap();
         let dispatcher = ITournamentManagerDispatcher { contract_address: addr };
 
+        // Deploy mock verifier
+        let mock_verifier_address = deploy_mock_verifier();
+
         let fee_recipient: ContractAddress = FEE_RECIPIENT.try_into().unwrap();
-        dispatcher.initialize(game_master, fee_recipient, 2, 500); // min 2 players, 5% fee
+        dispatcher.initialize(game_master, fee_recipient, mock_verifier_address, 2, 500);
 
         (world, dispatcher)
+    }
+
+    /// Deploy a mock verifier that always succeeds with configurable public inputs.
+    /// Uses starknet::syscalls::deploy_syscall with the mock contract class hash.
+    fn deploy_mock_verifier() -> ContractAddress {
+        let class_hash = mock_zk_verifier::TEST_CLASS_HASH.try_into().unwrap();
+        let salt: felt252 = 'mock_verifier';
+        let calldata: Array<felt252> = array![];
+        let (address, _) = starknet::syscalls::deploy_syscall(
+            class_hash, salt, calldata.span(), false,
+        ).unwrap();
+        address
+    }
+
+    /// Build a fake proof calldata that the mock verifier will interpret.
+    /// The mock verifier decodes: [commitment, guess0..4, clue0..4, clue_packed]
+    /// then wraps each as u256 (low, high=0) in the Serde format.
+    fn build_mock_proof(
+        commitment: felt252, guess_bytes: Array<u8>, clue_bytes: Array<u8>, clue_packed: u16,
+    ) -> Array<felt252> {
+        // The mock verifier expects 12 felt252 values as the proof payload
+        let mut calldata: Array<felt252> = array![];
+        calldata.append(commitment);
+        let mut i: u32 = 0;
+        while i < 5 {
+            calldata.append((*guess_bytes.at(i)).into());
+            i += 1;
+        };
+        i = 0;
+        while i < 5 {
+            calldata.append((*clue_bytes.at(i)).into());
+            i += 1;
+        };
+        calldata.append(clue_packed.into());
+        calldata
     }
 
     /// Helper: create a tournament with default params, returns tournament_id
     fn create_default_tournament(dispatcher: ITournamentManagerDispatcher) -> u64 {
         starknet::testing::set_block_timestamp(1000);
         dispatcher.create_tournament(
-            0xABCDEF,   // commitment
-            100,        // entry_fee
-            10,         // max_players
-            2000,       // start_time
-            5000,       // end_time
+            MOCK_COMMITMENT, // commitment
+            100,             // entry_fee
+            10,              // max_players
+            2000,            // start_time
+            5000,            // end_time
         )
     }
 
@@ -102,6 +145,23 @@ mod tests {
         starknet::testing::set_account_contract_address(gm);
     }
 
+    /// Helper: setup an active tournament with 2 players joined
+    fn setup_active_tournament() -> (dojo::world::WorldStorage, ITournamentManagerDispatcher, u64) {
+        let (world, dispatcher) = setup();
+        let tid = create_default_tournament(dispatcher);
+
+        as_player(PLAYER_1);
+        dispatcher.join_tournament(tid);
+        as_player(PLAYER_2);
+        dispatcher.join_tournament(tid);
+
+        as_game_master();
+        starknet::testing::set_block_timestamp(2000);
+        dispatcher.activate_tournament(tid);
+
+        (world, dispatcher, tid)
+    }
+
     // ─── Initialization Tests ───
 
     #[test]
@@ -112,6 +172,7 @@ mod tests {
         assert(config.tournament_count == 0, 'count should be 0');
         assert(config.min_players == 2, 'min_players should be 2');
         assert(config.platform_fee_bps == 500, 'fee_bps should be 500');
+        assert(!config.verifier_address.is_zero(), 'verifier should be set');
     }
 
     #[test]
@@ -120,7 +181,8 @@ mod tests {
         let (_, dispatcher) = setup();
         let gm: ContractAddress = GAME_MASTER.try_into().unwrap();
         let fr: ContractAddress = FEE_RECIPIENT.try_into().unwrap();
-        dispatcher.initialize(gm, fr, 2, 500);
+        // Re-use any valid address for the verifier — it won't get this far
+        dispatcher.initialize(gm, fr, gm, 2, 500);
     }
 
     // ─── Tournament Creation Tests ───
@@ -133,7 +195,7 @@ mod tests {
         assert(tid == 1, 'First tournament should be 1');
 
         let t: Tournament = world.read_model(tid);
-        assert(t.solution_commitment == 0xABCDEF, 'Commitment mismatch');
+        assert(t.solution_commitment == MOCK_COMMITMENT, 'Commitment mismatch');
         assert(t.entry_fee == 100, 'Entry fee mismatch');
         assert(t.max_players == 10, 'Max players mismatch');
         assert(t.current_players == 0, 'Should have 0 players');
@@ -254,24 +316,7 @@ mod tests {
         dispatcher.activate_tournament(tid); // should panic
     }
 
-    // ─── Guess Submission Tests ───
-
-    /// Helper: setup an active tournament with 2 players joined
-    fn setup_active_tournament() -> (dojo::world::WorldStorage, ITournamentManagerDispatcher, u64) {
-        let (world, dispatcher) = setup();
-        let tid = create_default_tournament(dispatcher);
-
-        as_player(PLAYER_1);
-        dispatcher.join_tournament(tid);
-        as_player(PLAYER_2);
-        dispatcher.join_tournament(tid);
-
-        as_game_master();
-        starknet::testing::set_block_timestamp(2000);
-        dispatcher.activate_tournament(tid);
-
-        (world, dispatcher, tid)
-    }
+    // ─── Guess Submission Tests (with mock verifier) ───
 
     #[test]
     fn test_submit_guess() {
@@ -279,7 +324,15 @@ mod tests {
 
         as_player(PLAYER_1);
         starknet::testing::set_block_timestamp(3000);
-        dispatcher.submit_guess(tid, 0x48454C4C4F, 0); // all absent
+
+        // Build mock proof: guess "HELLO" (0x48,0x45,0x4C,0x4C,0x4F), all absent clue
+        let proof = build_mock_proof(
+            MOCK_COMMITMENT,
+            array![0x48, 0x45, 0x4C, 0x4C, 0x4F],
+            array![0, 0, 0, 0, 0],
+            0,
+        );
+        dispatcher.submit_guess(tid, proof.span());
 
         let player_addr: ContractAddress = PLAYER_1.try_into().unwrap();
         let entry: TournamentEntry = world.read_model((tid, player_addr));
@@ -298,7 +351,8 @@ mod tests {
 
         as_player(PLAYER_3); // never joined
         starknet::testing::set_block_timestamp(3000);
-        dispatcher.submit_guess(tid, 0x01, 0); // should panic
+        let proof = build_mock_proof(MOCK_COMMITMENT, array![1,2,3,4,5], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, proof.span());
     }
 
     #[test]
@@ -309,7 +363,8 @@ mod tests {
 
         as_player(PLAYER_1);
         dispatcher.join_tournament(tid);
-        dispatcher.submit_guess(tid, 0x01, 0); // should panic — still OPEN
+        let proof = build_mock_proof(MOCK_COMMITMENT, array![1,2,3,4,5], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, proof.span()); // should panic -- still OPEN
     }
 
     #[test]
@@ -320,9 +375,14 @@ mod tests {
         starknet::testing::set_block_timestamp(3000);
 
         // Wrong guess first
-        dispatcher.submit_guess(tid, 0x01, 0);
-        // Win on second guess
-        dispatcher.submit_guess(tid, 0x02, ALL_CORRECT_CLUE);
+        let proof1 = build_mock_proof(MOCK_COMMITMENT, array![1,2,3,4,5], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, proof1.span());
+
+        // Win on second guess (all correct = 682)
+        let proof2 = build_mock_proof(
+            MOCK_COMMITMENT, array![6,7,8,9,10], array![2,2,2,2,2], ALL_CORRECT_CLUE,
+        );
+        dispatcher.submit_guess(tid, proof2.span());
 
         let player_addr: ContractAddress = PLAYER_1.try_into().unwrap();
         let entry: TournamentEntry = world.read_model((tid, player_addr));
@@ -339,12 +399,14 @@ mod tests {
         as_player(PLAYER_1);
         starknet::testing::set_block_timestamp(3000);
 
-        dispatcher.submit_guess(tid, 0x01, 0);
-        dispatcher.submit_guess(tid, 0x02, 0);
-        dispatcher.submit_guess(tid, 0x03, 0);
-        dispatcher.submit_guess(tid, 0x04, 0);
-        dispatcher.submit_guess(tid, 0x05, 0);
-        dispatcher.submit_guess(tid, 0x06, 0);
+        let mut i: u8 = 0;
+        while i < 6 {
+            let proof = build_mock_proof(
+                MOCK_COMMITMENT, array![i.into(),0,0,0,0], array![0,0,0,0,0], 0,
+            );
+            dispatcher.submit_guess(tid, proof.span());
+            i += 1;
+        };
 
         let player_addr: ContractAddress = PLAYER_1.try_into().unwrap();
         let entry: TournamentEntry = world.read_model((tid, player_addr));
@@ -360,8 +422,12 @@ mod tests {
 
         as_player(PLAYER_1);
         starknet::testing::set_block_timestamp(3000);
-        dispatcher.submit_guess(tid, 0x01, ALL_CORRECT_CLUE);
-        dispatcher.submit_guess(tid, 0x02, 0); // should panic
+        let proof1 = build_mock_proof(
+            MOCK_COMMITMENT, array![1,2,3,4,5], array![2,2,2,2,2], ALL_CORRECT_CLUE,
+        );
+        dispatcher.submit_guess(tid, proof1.span());
+        let proof2 = build_mock_proof(MOCK_COMMITMENT, array![6,7,8,9,10], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, proof2.span()); // should panic
     }
 
     #[test]
@@ -371,7 +437,8 @@ mod tests {
 
         as_player(PLAYER_1);
         starknet::testing::set_block_timestamp(6000); // after end_time=5000
-        dispatcher.submit_guess(tid, 0x01, 0); // should panic
+        let proof = build_mock_proof(MOCK_COMMITMENT, array![1,2,3,4,5], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, proof.span()); // should panic
     }
 
     // ─── End Tournament Tests ───
@@ -434,7 +501,7 @@ mod tests {
 
         as_game_master();
         let p1: ContractAddress = PLAYER_1.try_into().unwrap();
-        dispatcher.distribute_prizes(tid, array![p1]); // should panic — still ACTIVE
+        dispatcher.distribute_prizes(tid, array![p1]); // should panic -- still ACTIVE
     }
 
     // ─── Cancel Tournament Tests ───
@@ -458,7 +525,7 @@ mod tests {
         as_game_master();
         starknet::testing::set_block_timestamp(5000);
         dispatcher.end_tournament(tid, 42, 0x7B2);
-        dispatcher.cancel_tournament(tid); // should panic — already COMPLETED
+        dispatcher.cancel_tournament(tid); // should panic -- already COMPLETED
     }
 
     // ─── Multi-Player Game Flow ───
@@ -470,23 +537,35 @@ mod tests {
         // Player 1 wins in 2 attempts
         as_player(PLAYER_1);
         starknet::testing::set_block_timestamp(3000);
-        dispatcher.submit_guess(tid, 0x01, 0);
-        dispatcher.submit_guess(tid, 0x02, ALL_CORRECT_CLUE);
+        let p1_g1 = build_mock_proof(MOCK_COMMITMENT, array![1,2,3,4,5], array![0,0,0,0,0], 0);
+        dispatcher.submit_guess(tid, p1_g1.span());
+        let p1_g2 = build_mock_proof(
+            MOCK_COMMITMENT, array![6,7,8,9,10], array![2,2,2,2,2], ALL_CORRECT_CLUE,
+        );
+        dispatcher.submit_guess(tid, p1_g2.span());
 
         // Player 2 wins in 4 attempts
         as_player(PLAYER_2);
         starknet::testing::set_block_timestamp(3500);
-        dispatcher.submit_guess(tid, 0x01, 0);
-        dispatcher.submit_guess(tid, 0x02, 0);
-        dispatcher.submit_guess(tid, 0x03, 0);
-        dispatcher.submit_guess(tid, 0x04, ALL_CORRECT_CLUE);
+        let mut i: u8 = 0;
+        while i < 3 {
+            let proof = build_mock_proof(
+                MOCK_COMMITMENT, array![i.into(),0,0,0,0], array![0,0,0,0,0], 0,
+            );
+            dispatcher.submit_guess(tid, proof.span());
+            i += 1;
+        };
+        let p2_win = build_mock_proof(
+            MOCK_COMMITMENT, array![11,12,13,14,15], array![2,2,2,2,2], ALL_CORRECT_CLUE,
+        );
+        dispatcher.submit_guess(tid, p2_win.span());
 
         // End tournament
         as_game_master();
         starknet::testing::set_block_timestamp(5000);
         dispatcher.end_tournament(tid, 42, 0x7B2);
 
-        // Distribute prizes — Player 1 is rank 1, Player 2 is rank 2
+        // Distribute prizes -- Player 1 is rank 1, Player 2 is rank 2
         let p1: ContractAddress = PLAYER_1.try_into().unwrap();
         let p2: ContractAddress = PLAYER_2.try_into().unwrap();
         dispatcher.distribute_prizes(tid, array![p1, p2]);
@@ -503,5 +582,35 @@ mod tests {
         let t: Tournament = world.read_model(tid);
         assert(t.status == TournamentStatus::COMPLETED, 'Should be COMPLETED');
         assert(t.prize_pool == 200, 'Pool should be 200');
+    }
+}
+
+/// Mock ZK verifier for testing — returns public inputs from the proof payload directly.
+/// In production, the real Garaga verifier does cryptographic verification.
+#[starknet::contract]
+pub mod mock_zk_verifier {
+    use tweetle_dojo::systems::tournament_manager::IUltraKeccakZKHonkVerifier;
+
+    #[storage]
+    struct Storage {}
+
+    #[abi(embed_v0)]
+    impl MockVerifier of IUltraKeccakZKHonkVerifier<ContractState> {
+        fn verify_ultra_keccak_zk_honk_proof(
+            self: @ContractState, full_proof_with_hints: Span<felt252>,
+        ) -> Result<Span<u256>, felt252> {
+            // The mock proof payload is 12 felt252 values: the public inputs directly.
+            // Convert each to u256 and return.
+            assert(full_proof_with_hints.len() >= 12, 'Mock: bad proof len');
+            let mut public_inputs: Array<u256> = array![];
+            let mut i: u32 = 0;
+            while i < 12 {
+                let val: felt252 = *full_proof_with_hints.at(i);
+                let val_u256: u256 = val.into();
+                public_inputs.append(val_u256);
+                i += 1;
+            };
+            Result::Ok(public_inputs.span())
+        }
     }
 }

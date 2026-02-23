@@ -112,6 +112,54 @@ export function setupWorld(provider: DojoProvider) {
     }
   };
 
+  // ── tournament_manager ──
+
+  const build_tournament_manager_joinTournament_calldata = (tournamentId: BigNumberish): DojoCall => {
+    return {
+      contractName: 'tournament_manager',
+      entrypoint: 'join_tournament',
+      calldata: [tournamentId],
+    };
+  };
+
+  const tournament_manager_joinTournament = async (snAccount: Account | AccountInterface, tournamentId: BigNumberish) => {
+    try {
+      return await provider.execute(
+        snAccount,
+        build_tournament_manager_joinTournament_calldata(tournamentId),
+        'tweetle_dojo',
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
+  const build_tournament_manager_submitGuess_calldata = (tournamentId: BigNumberish, fullProofWithHints: string[]): DojoCall => {
+    return {
+      contractName: 'tournament_manager',
+      entrypoint: 'submit_guess',
+      calldata: [tournamentId, fullProofWithHints.length, ...fullProofWithHints],
+    };
+  };
+
+  const tournament_manager_submitGuess = async (
+    snAccount: Account | AccountInterface,
+    tournamentId: BigNumberish,
+    fullProofWithHints: string[],
+  ) => {
+    try {
+      return await provider.execute(
+        snAccount,
+        build_tournament_manager_submitGuess_calldata(tournamentId, fullProofWithHints),
+        'tweetle_dojo',
+      );
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
+  };
+
   // ── player_system ──
 
   const build_player_system_registerPlayer_calldata = (username: BigNumberish, referrer: string): DojoCall => {
@@ -153,6 +201,12 @@ export function setupWorld(provider: DojoProvider) {
     player_system: {
       registerPlayer: player_system_registerPlayer,
       buildRegisterPlayerCalldata: build_player_system_registerPlayer_calldata,
+    },
+    tournament_manager: {
+      joinTournament: tournament_manager_joinTournament,
+      buildJoinTournamentCalldata: build_tournament_manager_joinTournament_calldata,
+      submitGuess: tournament_manager_submitGuess,
+      buildSubmitGuessCalldata: build_tournament_manager_submitGuess_calldata,
     },
   };
 }
