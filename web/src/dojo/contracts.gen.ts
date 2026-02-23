@@ -1,0 +1,106 @@
+import { DojoProvider, type DojoCall } from '@dojoengine/core';
+
+const NS = 'tweetle_dojo';
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type AnyAccount = any;
+type BigNumberish = string | number | bigint;
+
+export function setupWorld(provider: DojoProvider) {
+  // ── tournament_manager ──
+
+  const tournament_manager_joinTournament = async (
+    snAccount: AnyAccount,
+    tournamentId: BigNumberish,
+  ) => {
+    const call: DojoCall = {
+      contractName: 'tournament_manager',
+      entrypoint: 'join_tournament',
+      calldata: [tournamentId],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  const tournament_manager_submitGuess = async (
+    snAccount: AnyAccount,
+    tournamentId: BigNumberish,
+    fullProofWithHints: string[],
+  ) => {
+    const call: DojoCall = {
+      contractName: 'tournament_manager',
+      entrypoint: 'submit_guess',
+      calldata: [tournamentId, fullProofWithHints.length, ...fullProofWithHints],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  const tournament_manager_createTournament = async (
+    snAccount: AnyAccount,
+    commitment: BigNumberish,
+    entryFee: BigNumberish,
+    maxPlayers: BigNumberish,
+    startTime: BigNumberish,
+    endTime: BigNumberish,
+  ) => {
+    const call: DojoCall = {
+      contractName: 'tournament_manager',
+      entrypoint: 'create_tournament',
+      calldata: [commitment, entryFee, maxPlayers, startTime, endTime],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  const tournament_manager_activateTournament = async (
+    snAccount: AnyAccount,
+    tournamentId: BigNumberish,
+  ) => {
+    const call: DojoCall = {
+      contractName: 'tournament_manager',
+      entrypoint: 'activate_tournament',
+      calldata: [tournamentId],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  const tournament_manager_endTournament = async (
+    snAccount: AnyAccount,
+    tournamentId: BigNumberish,
+    solutionIndex: BigNumberish,
+    solutionSalt: BigNumberish,
+  ) => {
+    const call: DojoCall = {
+      contractName: 'tournament_manager',
+      entrypoint: 'end_tournament',
+      calldata: [tournamentId, solutionIndex, solutionSalt],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  // ── player_system ──
+
+  const player_system_registerPlayer = async (
+    snAccount: AnyAccount,
+    username: BigNumberish,
+    referrer: string,
+  ) => {
+    const call: DojoCall = {
+      contractName: 'player_system',
+      entrypoint: 'register_player',
+      calldata: [username, referrer],
+    };
+    return provider.execute(snAccount, call, NS);
+  };
+
+  return {
+    tournament_manager: {
+      joinTournament: tournament_manager_joinTournament,
+      submitGuess: tournament_manager_submitGuess,
+      createTournament: tournament_manager_createTournament,
+      activateTournament: tournament_manager_activateTournament,
+      endTournament: tournament_manager_endTournament,
+    },
+    player_system: {
+      registerPlayer: player_system_registerPlayer,
+    },
+  };
+}

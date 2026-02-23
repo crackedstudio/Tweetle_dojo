@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand */
+  --color-brand: #00E5CC;
+  --color-brand-alpha: #00E5CCB2;
+  --color-secondary: #0E1A20;
+  --color-secondary-alpha: #0E1A20E5;
+  --color-accent: #E8A530;
+  --color-accent-alpha: #E8A53080;
+
+  /* Backgrounds */
+  --color-bg-primary: #0E1A20;
+  --color-bg-surface: #14232B;
+  --color-bg-surface-light: #1A2D36;
+
+  /* Tile states */
+  --color-tile-correct: #1B8E47;
+  --color-tile-present: #FFD93D;
+  --color-tile-absent: rgba(12, 141, 138, 0.32);
+  --color-tile-empty: #14232B;
+  --color-tile-border: #1E4A5A;
+  --color-tile-active-border: #00E5CCB2;
+
+  /* UI feedback */
+  --color-success: #1B8E47;
+  --color-warning: #EAB308;
+  --color-error: #EF4444;
+  --color-info: #00E5CC;
+  --color-gold: #D4A017;
+  --color-silver: #9CA3AF;
+
+  /* Text */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #8BA8B8;
+  --color-text-accent: #00E5CC;
+  --color-text-muted: #4A6A7A;
+  --color-text-on-tile: #FFFFFF;
+
+  /* Fonts */
+  --font-display: 'Bungee', cursive;
+  --font-heading: 'Fredoka One', cursive;
+  --font-body: 'Inter', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+body {
+  @apply bg-bg-primary text-text-primary font-body m-0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}

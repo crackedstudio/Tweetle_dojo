@@ -1,0 +1,1 @@
+{"version":1,"contracts":[{"id":"r99k0p8pe3krq","package_name":"tweetle_verifier","contract_name":"UltraKeccakZKHonkVerifier","module_path":"tweetle_verifier::honk_verifier::UltraKeccakZKHonkVerifier","artifacts":{"sierra":"tweetle_verifier_UltraKeccakZKHonkVerifier.contract_class.json","casm":"tweetle_verifier_UltraKeccakZKHonkVerifier.compiled_contract_class.json"}}]}
