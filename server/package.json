@@ -26,5 +26,8 @@
       "better-sqlite3",
       "esbuild"
     ]
+  },
+  "engines": {
+    "node": "24.x"
   }
 }
