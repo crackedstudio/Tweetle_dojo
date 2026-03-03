@@ -51,7 +51,6 @@
 
 body {
   @apply text-text-primary font-body m-0 min-h-screen relative;
-  background-image: url('/background.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
@@ -112,4 +111,49 @@ body::before {
 
 .tile-flip {
   animation: flip 0.6s ease-in-out forwards;
+}
+@utility animate-trail-flow {
+  animation: trail-flow 30s linear infinite;
+}
+
+@utility animate-float-spaceship {
+  animation: float-spaceship 4s ease-in-out infinite;
+}
+
+@utility shadow-glow-blue {
+  box-shadow: 0 0 20px rgba(58, 176, 255, 0.4);
+}
+
+@utility shadow-glow-yellow {
+  box-shadow: 0 0 15px rgba(255, 217, 61, 0.6);
+}
+
+@utility drop-shadow-glow-blue {
+  filter: drop-shadow(0 0 8px rgba(58, 176, 255, 0.6));
+}
+
+@keyframes trail-flow {
+  from { stroke-dashoffset: 200; }
+  to { stroke-dashoffset: 0; }
+}
+
+@keyframes float-spaceship {
+  0%, 100% { transform: translate(-50%, 0) translateY(0) rotate(-2deg); }
+  50% { transform: translate(-50%, 0) translateY(-15px) rotate(2deg); }
+}
+
+.bg-saga-stars {
+  background-image: 
+    radial-gradient(1px 1px at 20px 30px, #eee, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 50px 160px, #ddd, rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 90px 40px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 160px 120px, #ddd, rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 200px 200px;
+}
+
+.bg-radial-dark {
+  background: radial-gradient(circle at center, rgba(10, 22, 26, 0.4) 0%, rgba(10, 22, 26, 0.9) 100%);
 }

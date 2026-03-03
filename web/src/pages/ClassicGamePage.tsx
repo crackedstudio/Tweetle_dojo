@@ -1,11 +1,12 @@
 import { useState, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useGameActions } from '../hooks/useGameActions';
 import { useWallet } from '../providers/WalletProvider';
 import type { TileData, TileState } from '../dojo/models';
 import { WordleBoard } from '../components/WordleBoard';
 import { Keyboard } from '../components/Keyboard';
 import { GameOverModal } from '../components/GameOverModal';
+import { ChevronRight } from 'lucide-react';
 
 const COLS = 5;
 const MAX_ATTEMPTS = 6;
@@ -28,9 +29,10 @@ function getKeyboardStates(guesses: TileData[][]): Record<string, TileState> {
 }
 
 export function ClassicGamePage() {
+  const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { account } = useWallet();
-  const { resumeOrStartGame, submitGuess, startGame } = useGameActions();
+  const { resumeOrStartGame, resumeGame, submitGuess, startGame } = useGameActions();
 
   const [gameId, setGameId] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<TileData[][]>([]);
@@ -53,11 +55,21 @@ export function ClassicGamePage() {
     let cancelled = false;
     async function init() {
       try {
-        const resumed = await resumeOrStartGame();
+        let state;
+        if (id) {
+          state = await resumeGame(Number(id));
+        } else {
+          state = await resumeOrStartGame();
+        }
+        
         if (!cancelled) {
-          setGameId(resumed.gameId);
-          setGuesses(resumed.guesses);
-          if (resumed.gameOver) setGameOver(resumed.gameOver);
+          setGameId(state.gameId);
+          setGuesses(state.guesses);
+          if (state.gameOver) {
+            setGameOver(state.gameOver);
+            if (state.gameOver === 'won') setWinAttempts(state.guesses.length);
+            setShowModal(true);
+          }
         }
       } catch (err: any) {
         if (!cancelled) setError(err.message);
@@ -67,7 +79,7 @@ export function ClassicGamePage() {
     }
     init();
     return () => { cancelled = true; };
-  }, [resumeOrStartGame, account]);
+  }, [resumeOrStartGame, resumeGame, account, id]);
 
   const handleKeyPress = useCallback(
     (key: string) => {
@@ -168,11 +180,19 @@ export function ClassicGamePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-bg-surface/40 backdrop-blur-md px-4 py-4 text-center border-b border-white/5 shadow-lg">
-        <h2 className="font-heading text-lg text-text-primary uppercase tracking-widest">Classic Mode</h2>
-        {gameId !== null && (
-          <p className="text-accent text-[10px] font-heading tracking-[0.3em] mt-1 opacity-80 uppercase">Game #{gameId}</p>
-        )}
+      <div className="bg-bg-surface/40 backdrop-blur-md px-4 py-4 border-b border-white/5 shadow-lg relative">
+        <button
+          onClick={() => navigate('/classic')}
+          className="absolute left-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-accent transition-all cursor-pointer group"
+        >
+          <ChevronRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
+        </button>
+        <div className="text-center">
+          <h2 className="font-heading text-lg text-text-primary uppercase tracking-widest">Classic Mode</h2>
+          {gameId !== null && (
+            <p className="text-accent text-[10px] font-heading tracking-[0.3em] mt-1 opacity-80 uppercase">Game #{gameId}</p>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -190,8 +210,8 @@ export function ClassicGamePage() {
       {/* Board */}
       <div className="flex-1 flex flex-col items-center justify-center py-4">
         {guesses.length === 0 && currentGuess.length === 0 && (
-          <p className="text-text-muted text-sm font-semibold tracking-wider mb-3">
-            MAKE YOUR FIRST GUESS!
+          <p className="text-accent text-xs font-heading tracking-[0.3em] mb-4 drop-shadow-[0_0_8px_rgba(255,217,61,0.4)] uppercase">
+            Make your first guess!
           </p>
         )}
         <WordleBoard board={board} />

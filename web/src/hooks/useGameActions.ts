@@ -12,7 +12,9 @@ import {
   pollDailyJoined,
   pollNewDailyAttempt,
   fetchDailyAttempts,
+  fetchClassicGames,
   GET_LATEST_CLASSIC_GAME,
+  GET_CLASSIC_GAME,
   GET_GAME_ATTEMPTS,
   GET_DAILY_ATTEMPT_COUNT,
   type ClassicAttemptNode,
@@ -125,6 +127,34 @@ export function useGameActions() {
     return { gameId: newGameId, guesses: [], gameOver: null };
   }, [playerAddress, startGame]);
 
+  const resumeGame = useCallback(async (gameId: number): Promise<ResumedGameState> => {
+    if (!playerAddress) throw new Error('Dojo not initialized');
+    const { data: attemptsData } = await apolloClient.query<any>({
+      query: GET_GAME_ATTEMPTS,
+      variables: { player: playerAddress, gameId: '0x' + gameId.toString(16) },
+      fetchPolicy: 'network-only',
+    });
+
+    const attemptNodes: ClassicAttemptNode[] =
+      attemptsData?.tweetleDojoClassicAttemptModels?.edges?.map((e: any) => e.node) ?? [];
+    
+    const { data: gameData } = await apolloClient.query<any>({
+      query: GET_CLASSIC_GAME,
+      variables: { player: playerAddress, gameId: '0x' + gameId.toString(16) },
+      fetchPolicy: 'network-only',
+    });
+    const game = gameData?.tweetleDojoClassicGameModels?.edges?.[0]?.node;
+    
+    const guesses = attemptsToGuesses(attemptNodes);
+    let gameOver: 'won' | 'lost' | null = null;
+    if (game?.has_ended) {
+      const lastHint = Number(attemptNodes[attemptNodes.length - 1]?.hint_packed);
+      gameOver = lastHint === WINNING_HINT ? 'won' : 'lost';
+    }
+
+    return { gameId, guesses, gameOver };
+  }, [playerAddress]);
+
   // ── Daily Mode ──
 
   const getTodayGameId = useCallback((): number => {
@@ -212,8 +242,10 @@ export function useGameActions() {
     startGame,
     submitGuess,
     resumeOrStartGame,
+    resumeGame,
     checkDailyStatus,
     startDailyGame,
     submitDailyGuess,
+    listClassicGames: (player: string) => fetchClassicGames(player),
   };
 }

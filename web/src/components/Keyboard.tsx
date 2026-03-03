@@ -5,7 +5,7 @@ import { Delete } from 'lucide-react';
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
   ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
-  ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK'],
+  ['BACK', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'ENTER'],
 ];
 
 const KEY_STYLE: Record<string, string> = {
@@ -49,8 +49,11 @@ export function Keyboard({ keyStates, onKeyPress, onSubmit, disabled }: Keyboard
           {row.map((key) => {
             const state = keyStates[key];
             const hasState = state && state !== 'empty' && state !== 'filled';
-            const isWide = key === 'ENTER' || key === 'BACK';
             const bgClass = hasState ? KEY_STYLE[state] : 'bg-bg-surface-light border-tile-border/40 text-text-primary';
+            const isBack = key === 'BACK';
+            const isEnter = key === 'ENTER';
+            const isWide = isEnter || isBack;
+            const customBg = isEnter ? 'bg-accent border-puffy-yellow-border text-secondary' : isBack ? 'bg-error border-red-900/40 text-white' : bgClass;
 
             return (
               <button
@@ -61,15 +64,15 @@ export function Keyboard({ keyStates, onKeyPress, onSubmit, disabled }: Keyboard
                 }}
                 disabled={disabled}
                 className={`
-                  h-[56px] lg:h-[64px] rounded-xl lg:rounded-2xl border-b-4 border-r-2 
+                  h-[50px] lg:h-[64px] rounded-lg lg:rounded-2xl border-b-4 border-r-2 
                   flex items-center justify-center transition-all cursor-pointer 
                   disabled:opacity-50 active:border-b-0 active:border-r-0 
                   active:translate-y-1 active:translate-x-0.5 group 
-                  ${bgClass} 
-                  ${isWide ? 'px-4 lg:px-6 text-[10px] font-heading tracking-widest' : 'w-10 lg:w-12 text-lg font-heading'}
+                  ${customBg} 
+                  ${isWide ? 'px-2 lg:px-6 text-[8px] lg:text-[10px] font-heading tracking-widest' : 'flex-1 max-w-[36px] lg:w-12 text-base lg:text-lg font-heading'}
                 `}
               >
-                {key === 'BACK' ? <Delete className="w-5 h-5 group-hover:scale-110" /> : key}
+                {key === 'BACK' ? <Delete className="w-5 h-5" /> : key}
               </button>
             );
           })}

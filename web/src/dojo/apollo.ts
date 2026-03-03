@@ -97,6 +97,44 @@ export const GET_LATEST_CLASSIC_GAME = gql`
   }
 `;
 
+export const GET_ALL_CLASSIC_GAMES = gql`
+  query GetAllClassicGames($player: String!) {
+    tweetleDojoClassicGameModels(
+      where: { player: $player }
+      order: { field: GAME_ID, direction: DESC }
+      first: 100
+    ) {
+      edges {
+        node {
+          player
+          game_id
+          starts_at
+          expires_at
+          word_index
+          has_ended
+        }
+      }
+    }
+  }
+`;
+
+export const GET_CLASSIC_GAME = gql`
+  query GetClassicGame($player: String!, $gameId: String!) {
+    tweetleDojoClassicGameModels(where: { player: $player, game_id: $gameId }, first: 1) {
+      edges {
+        node {
+          player
+          game_id
+          starts_at
+          expires_at
+          word_index
+          has_ended
+        }
+      }
+    }
+  }
+`;
+
 export const GET_GAME_ATTEMPTS = gql`
   query GetGameAttempts($player: String!, $gameId: String!) {
     tweetleDojoClassicAttemptModels(
@@ -166,6 +204,26 @@ export async function fetchLatestClassicGame(player: string): Promise<ClassicGam
     fetchPolicy: 'network-only',
   });
   return data?.tweetleDojoClassicGameModels?.edges?.[0]?.node ?? null;
+}
+
+export async function fetchClassicGame(player: string, gameId: number): Promise<ClassicGameNode | null> {
+  const { data } = await apolloClient.query<GetLatestClassicGameResponse>({
+    query: GET_CLASSIC_GAME,
+    variables: { player, gameId: '0x' + gameId.toString(16) },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoClassicGameModels?.edges?.[0]?.node ?? null;
+}
+
+export async function fetchClassicGames(player: string): Promise<ClassicGameNode[]> {
+  const { data } = await apolloClient.query<{
+    tweetleDojoClassicGameModels: { edges: Array<{ node: ClassicGameNode }> };
+  }>({
+    query: GET_ALL_CLASSIC_GAMES,
+    variables: { player },
+    fetchPolicy: 'network-only',
+  });
+  return data?.tweetleDojoClassicGameModels?.edges?.map((e) => e.node) ?? [];
 }
 
 export async function fetchGameAttempts(player: string, gameId: number): Promise<ClassicAttemptNode[]> {

@@ -14,8 +14,8 @@ export function Tile({ tile, delay = 0 }: { tile: TileData; delay?: number }) {
   return (
     <div
       className={`
-        w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center 
-        rounded-[1.25rem] transition-all duration-300 select-none
+        w-[11vw] h-[11vw] max-w-[64px] max-h-[64px] flex items-center justify-center 
+        rounded-xl lg:rounded-[1.25rem] transition-all duration-300 select-none
         ${TILE_STYLE[tile.state]}
       `}
       style={{ 

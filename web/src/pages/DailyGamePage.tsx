@@ -293,8 +293,8 @@ export function DailyGamePage() {
       {/* Board */}
       <div className="flex-1 flex flex-col items-center justify-center py-4">
         {guesses.length === 0 && currentGuess.length === 0 && (
-          <p className="text-text-muted text-sm font-semibold tracking-wider mb-3">
-            MAKE YOUR FIRST GUESS!
+          <p className="text-accent text-xs font-heading tracking-[0.3em] mb-4 drop-shadow-[0_0_8px_rgba(255,217,61,0.4)] uppercase">
+            Make your first guess!
           </p>
         )}
         <WordleBoard board={board} />

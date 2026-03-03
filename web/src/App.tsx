@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { DashboardPage } from './pages/DashboardPage';
+import { ClassicGameListPage } from './pages/ClassicGameListPage';
 import { ClassicGamePage } from './pages/ClassicGamePage';
 import { DailyGamePage } from './pages/DailyGamePage';
 import { TournamentListPage } from './pages/TournamentListPage';
@@ -12,7 +13,8 @@ export default function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<DashboardPage />} />
-        <Route path="/classic" element={<ClassicGamePage />} />
+        <Route path="/classic" element={<ClassicGameListPage />} />
+        <Route path="/classic/play/:id" element={<ClassicGamePage />} />
         <Route path="/daily" element={<DailyGamePage />} />
         <Route path="/tournaments" element={<TournamentListPage />} />
         <Route path="/tournament/:id" element={<TournamentGamePage />} />
