@@ -1,28 +1,31 @@
 import type { TileData, TileState } from '../dojo/models';
 
-const TILE_BG: Record<TileState, string> = {
-  empty: 'bg-tile-empty',
-  filled: 'bg-tile-empty',
-  correct: 'bg-tile-correct',
-  present: 'bg-tile-present',
-  absent: 'bg-tile-absent',
+const TILE_STYLE: Record<TileState, string> = {
+  empty: 'bg-tile-empty border-tile-border border-b-4',
+  filled: 'bg-tile-empty border-tile-active-border border-2 border-b-6 tile-pop scale-105',
+  correct: 'bg-tile-correct border-b-6 border-tile-correct/50 tile-flip',
+  present: 'bg-tile-present border-b-6 border-tile-present/50 tile-flip',
+  absent: 'bg-tile-absent border-b-6 border-tile-absent/50 tile-flip',
 };
 
-const TILE_BORDER: Record<TileState, string> = {
-  empty: 'border-tile-border',
-  filled: 'border-tile-active-border border-2',
-  correct: 'border-tile-correct',
-  present: 'border-tile-present',
-  absent: 'border-transparent',
-};
-
-export function Tile({ tile }: { tile: TileData }) {
+export function Tile({ tile, delay = 0 }: { tile: TileData; delay?: number }) {
+  const isRevealed = ['correct', 'present', 'absent'].includes(tile.state);
+  
   return (
     <div
-      className={`w-[52px] h-[52px] flex items-center justify-center rounded border ${TILE_BG[tile.state]} ${TILE_BORDER[tile.state]} transition-colors`}
+      className={`
+        w-14 h-14 lg:w-16 lg:h-16 flex items-center justify-center 
+        rounded-[1.25rem] transition-all duration-300 select-none
+        ${TILE_STYLE[tile.state]}
+      `}
+      style={{ 
+        animationDelay: isRevealed ? `${delay}ms` : '0ms'
+      }}
     >
       {tile.letter && (
-        <span className="text-text-on-tile font-display text-xl">
+        <span 
+          className="text-white font-display text-2xl lg:text-3xl drop-shadow-md uppercase"
+        >
           {tile.letter}
         </span>
       )}

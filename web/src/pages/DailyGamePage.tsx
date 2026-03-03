@@ -6,6 +6,7 @@ import type { TileData, TileState } from '../dojo/models';
 import { WordleBoard } from '../components/WordleBoard';
 import { Keyboard } from '../components/Keyboard';
 import { GameOverModal } from '../components/GameOverModal';
+import { Trophy, Ghost } from 'lucide-react';
 
 const COLS = 5;
 const MAX_ATTEMPTS = 6;
@@ -68,11 +69,15 @@ function DailyCountdownScreen({
   return (
     <div className="flex-1 flex flex-col items-center justify-center px-6">
       <div
-        className={`w-20 h-20 rounded-full flex items-center justify-center mb-6 ${
-          isWin ? 'bg-tile-correct/30' : 'bg-bg-surfaceLight'
+        className={`w-20 h-20 rounded-3xl flex items-center justify-center mb-6 shadow-xl border-b-6 border-r-4 ${
+          isWin ? 'bg-tile-correct/20 border-tile-correct/40' : 'bg-secondary/40 border-tile-absent/40'
         }`}
       >
-        <span className="text-4xl">{isWin ? '🏆' : '✋'}</span>
+        {isWin ? (
+          <Trophy className="w-10 h-10 text-tile-correct drop-shadow-lg" />
+        ) : (
+          <Ghost className="w-10 h-10 text-brand drop-shadow-lg" />
+        )}
       </div>
 
       <h2
@@ -254,8 +259,13 @@ export function DailyGamePage() {
   if (initializing) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
+        <img 
+          src="/mascot.png" 
+          alt="Mascot" 
+          className="w-16 h-16 animate-pulse mb-6 opacity-60 grayscale-[0.5]" 
+        />
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-text-secondary text-sm">Loading daily challenge...</p>
+        <p className="text-text-secondary text-base font-semibold tracking-wider uppercase">Loading Dojo...</p>
       </div>
     );
   }
@@ -263,7 +273,7 @@ export function DailyGamePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-bg-surface px-4 py-3 text-center">
+      <div className="bg-bg-surface/40 backdrop-blur-sm px-4 py-3 text-center border-b border-tile-border/30">
         <h2 className="font-heading text-base text-text-primary">Daily Challenge</h2>
         <p className="text-accent text-xs font-semibold tracking-[2px]">ONE WORD PER DAY</p>
       </div>

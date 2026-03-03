@@ -1,5 +1,6 @@
 import { useEffect, useCallback } from 'react';
 import type { TileState } from '../dojo/models';
+import { Delete } from 'lucide-react';
 
 const KEYBOARD_ROWS = [
   ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
@@ -7,10 +8,10 @@ const KEYBOARD_ROWS = [
   ['ENTER', 'Z', 'X', 'C', 'V', 'B', 'N', 'M', 'BACK'],
 ];
 
-const KEY_BG: Record<string, string> = {
-  correct: 'bg-tile-correct border-tile-correct',
-  present: 'bg-tile-present border-tile-present text-bg-primary',
-  absent: 'bg-[rgba(12,141,138,0.15)] border-[rgba(12,141,138,0.1)]',
+const KEY_STYLE: Record<string, string> = {
+  correct: 'bg-tile-correct border-tile-correct/50 text-white',
+  present: 'bg-tile-present border-tile-present/50 text-secondary',
+  absent: 'bg-tile-absent border-tile-absent/50 text-text-secondary opacity-60',
 };
 
 interface KeyboardProps {
@@ -42,14 +43,14 @@ export function Keyboard({ keyStates, onKeyPress, onSubmit, disabled }: Keyboard
   }, [handleKey]);
 
   return (
-    <div className="flex flex-col gap-1 px-1">
+    <div className="flex flex-col gap-2 px-2 max-w-2xl mx-auto select-none">
       {KEYBOARD_ROWS.map((row, rowIdx) => (
-        <div key={rowIdx} className="flex justify-center gap-1">
+        <div key={rowIdx} className="flex justify-center gap-1.5 lg:gap-2">
           {row.map((key) => {
             const state = keyStates[key];
             const hasState = state && state !== 'empty' && state !== 'filled';
             const isWide = key === 'ENTER' || key === 'BACK';
-            const bgClass = hasState ? KEY_BG[state] : 'bg-tile-empty border-tile-border';
+            const bgClass = hasState ? KEY_STYLE[state] : 'bg-bg-surface-light border-tile-border/40 text-text-primary';
 
             return (
               <button
@@ -59,11 +60,16 @@ export function Keyboard({ keyStates, onKeyPress, onSubmit, disabled }: Keyboard
                   else onKeyPress(key);
                 }}
                 disabled={disabled}
-                className={`h-[46px] rounded-lg border flex items-center justify-center transition-colors cursor-pointer disabled:opacity-50 ${bgClass} ${
-                  isWide ? 'w-[60px] text-[10px] font-semibold' : 'w-[36px] text-[15px] font-bold'
-                } ${hasState && state !== 'present' ? 'text-text-primary' : ''}`}
+                className={`
+                  h-[56px] lg:h-[64px] rounded-xl lg:rounded-2xl border-b-4 border-r-2 
+                  flex items-center justify-center transition-all cursor-pointer 
+                  disabled:opacity-50 active:border-b-0 active:border-r-0 
+                  active:translate-y-1 active:translate-x-0.5 group 
+                  ${bgClass} 
+                  ${isWide ? 'px-4 lg:px-6 text-[10px] font-heading tracking-widest' : 'w-10 lg:w-12 text-lg font-heading'}
+                `}
               >
-                {key === 'BACK' ? '⌫' : key}
+                {key === 'BACK' ? <Delete className="w-5 h-5 group-hover:scale-110" /> : key}
               </button>
             );
           })}

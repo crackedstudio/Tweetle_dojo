@@ -11,9 +11,9 @@ export function ConnectButton() {
         </span>
         <button
           onClick={disconnect}
-          className="px-3 py-1.5 text-sm rounded-lg border border-tile-border text-text-secondary hover:text-text-primary hover:border-brand transition-colors cursor-pointer"
+          className="px-4 py-2 text-xs font-heading tracking-wider bg-bg-surface-light/40 text-text-secondary border-tile-border/50 hover:border-error/50 hover:text-error transition-all button-bubbly cursor-pointer"
         >
-          Disconnect
+          DISCONNECT
         </button>
       </div>
     );
@@ -23,9 +23,9 @@ export function ConnectButton() {
     <button
       onClick={connect}
       disabled={isConnecting}
-      className="px-4 py-2 rounded-lg bg-brand text-secondary font-semibold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
+      className="px-5 py-2.5 rounded-xl bg-brand text-secondary border-puffy-blue-border font-heading tracking-widest text-xs button-bubbly disabled:opacity-50 cursor-pointer"
     >
-      {isConnecting ? 'Connecting...' : 'Connect Wallet'}
+      {isConnecting ? 'CONNECTING...' : 'CONNECT WALLET'}
     </button>
   );
 }

@@ -4,6 +4,7 @@ import { useTournamentActions } from '../hooks/useTournamentActions';
 import { useWallet } from '../providers/WalletProvider';
 import type { TournamentNode } from '../dojo/apollo';
 import { TournamentCard } from '../components/TournamentCard';
+import { Trophy } from 'lucide-react';
 
 export function TournamentListPage() {
   const navigate = useNavigate();
@@ -56,11 +57,11 @@ export function TournamentListPage() {
 
   return (
     <div className="max-w-2xl mx-auto w-full px-4 py-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="font-heading text-2xl text-text-primary">Tournaments</h1>
+      <div className="flex items-center justify-between mb-8">
+        <h1 className="font-heading text-3xl text-text-primary tracking-wide drop-shadow-sm">Tournaments</h1>
         <button
           onClick={() => loadTournaments()}
-          className="px-3 py-1.5 text-sm rounded-lg border border-tile-border text-text-secondary hover:text-text-primary hover:border-brand transition-colors cursor-pointer bg-transparent"
+          className="px-6 py-2 text-sm font-heading tracking-widest rounded-xl border-puffy-yellow-border bg-accent text-secondary button-bubbly shadow-lg uppercase"
         >
           Refresh
         </button>
@@ -79,7 +80,7 @@ export function TournamentListPage() {
         </div>
       ) : tournaments.length === 0 ? (
         <div className="flex flex-col items-center py-20 text-center">
-          <span className="text-5xl mb-5">🏆</span>
+          <Trophy className="w-16 h-16 text-accent mb-6 opacity-30 drop-shadow-lg" />
           <h2 className="font-heading text-xl text-text-primary mb-2">No Tournaments Yet</h2>
           <p className="text-text-secondary text-sm max-w-xs">
             Tournaments will appear here once they are created by the game master.

@@ -154,8 +154,13 @@ export function ClassicGamePage() {
   if (initializing) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center">
+        <img 
+          src="/mascot.png" 
+          alt="Mascot" 
+          className="w-16 h-16 animate-pulse mb-6 opacity-60 grayscale-[0.5]" 
+        />
         <div className="w-8 h-8 border-2 border-brand border-t-transparent rounded-full animate-spin mb-3" />
-        <p className="text-text-secondary text-sm">Starting game...</p>
+        <p className="text-text-secondary text-base font-semibold tracking-wider uppercase">Loading Dojo...</p>
       </div>
     );
   }
@@ -163,10 +168,10 @@ export function ClassicGamePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-bg-surface px-4 py-3 text-center">
-        <h2 className="font-heading text-base text-text-primary">Classic Mode</h2>
+      <div className="bg-bg-surface/40 backdrop-blur-md px-4 py-4 text-center border-b border-white/5 shadow-lg">
+        <h2 className="font-heading text-lg text-text-primary uppercase tracking-widest">Classic Mode</h2>
         {gameId !== null && (
-          <p className="text-text-muted text-xs">Game #{gameId}</p>
+          <p className="text-accent text-[10px] font-heading tracking-[0.3em] mt-1 opacity-80 uppercase">Game #{gameId}</p>
         )}
       </div>
 

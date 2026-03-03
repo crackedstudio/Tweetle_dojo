@@ -1,13 +1,18 @@
 @import "tailwindcss";
 
 @theme {
-  /* Brand */
-  --color-brand: #00E5CC;
-  --color-brand-alpha: #00E5CCB2;
-  --color-secondary: #0E1A20;
-  --color-secondary-alpha: #0E1A20E5;
-  --color-accent: #E8A530;
-  --color-accent-alpha: #E8A53080;
+  /* High-Contrast Asset Palette */
+  --color-brand: #3AB0FF; /* Bird Blue */
+  --color-brand-alpha: #3AB0FFB2;
+  --color-secondary: #0A161A; /* Midnight Contrast */
+  --color-accent: #FFD93D; /* Beak Golden */
+  --color-accent-alpha: #FFD93D80;
+  --color-puffy-purple: #C4BDF5;
+  --color-puffy-purple-border: #9C94DE;
+  --color-puffy-blue: #3AB0FF;
+  --color-puffy-blue-border: #1E6BA3;
+  --color-puffy-yellow: #FFD93D;
+  --color-puffy-yellow-border: #9C8525;
 
   /* Backgrounds */
   --color-bg-primary: #0E1A20;
@@ -15,26 +20,26 @@
   --color-bg-surface-light: #1A2D36;
 
   /* Tile states */
-  --color-tile-correct: #1B8E47;
-  --color-tile-present: #FFD93D;
-  --color-tile-absent: rgba(12, 141, 138, 0.32);
+  --color-tile-correct: #1B8E47; /* Meadow Green */
+  --color-tile-present: #FFD93D; /* Beak Golden */
+  --color-tile-absent: #1E4A5A80; /* Muted Blue-Grey */
   --color-tile-empty: #14232B;
   --color-tile-border: #1E4A5A;
-  --color-tile-active-border: #00E5CCB2;
+  --color-tile-active-border: #3AB0FF; /* Bird Blue */
 
   /* UI feedback */
   --color-success: #1B8E47;
   --color-warning: #EAB308;
   --color-error: #EF4444;
-  --color-info: #00E5CC;
+  --color-info: #C4BDF5;
   --color-gold: #D4A017;
   --color-silver: #9CA3AF;
 
   /* Text */
   --color-text-primary: #FFFFFF;
-  --color-text-secondary: #8BA8B8;
-  --color-text-accent: #00E5CC;
-  --color-text-muted: #4A6A7A;
+  --color-text-secondary: #94A3B8;
+  --color-text-accent: #FFD93D;
+  --color-text-muted: #334155;
   --color-text-on-tile: #FFFFFF;
 
   /* Fonts */
@@ -45,13 +50,66 @@
 }
 
 body {
-  @apply bg-bg-primary text-text-primary font-body m-0;
+  @apply text-text-primary font-body m-0 min-h-screen relative;
+  background-image: url('/background.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+body::before {
+  content: '';
+  @apply fixed inset-0 -z-10;
+  background: radial-gradient(circle at center, rgba(10, 22, 26, 0.75) 0%, rgba(10, 22, 26, 0.95) 100%);
 }
 
 #root {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+}
+
+@utility animate-bounce-slow {
+  animation: bounce-slow 3s infinite ease-in-out;
+}
+
+@utility button-bubbly {
+  @apply rounded-2xl border-b-6 border-r-4 transition-all active:border-b-0 active:border-r-0 active:translate-y-1.5 active:translate-x-1 hover:brightness-110 shadow-lg;
+}
+
+@utility card-bubbly {
+  @apply bg-secondary/80 backdrop-blur-2xl rounded-[3rem] border-4 border-white/5 shadow-[0_30px_80px_rgba(0,0,0,0.6)] hover:border-brand/40 transition-all duration-500;
+}
+
+@keyframes bounce-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  40% { transform: scale(1.1); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes flip {
+  0% { transform: rotateX(0); }
+  45% { transform: rotateX(90deg); }
+  55% { transform: rotateX(90deg); }
+  100% { transform: rotateX(0); }
+}
+
+.tile-pop {
+  animation: pop 0.15s ease-out;
+}
+
+.tile-flip {
+  animation: flip 0.6s ease-in-out forwards;
 }
