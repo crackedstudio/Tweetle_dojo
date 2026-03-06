@@ -1,11 +1,13 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import { tournamentRoutes } from './routes/tournament.js';
+import { validateMasterSecret } from './derive.js';
 
 const PORT = parseInt(process.env.PORT || '3001');
 const HOST = process.env.HOST || '0.0.0.0';
 
 async function main() {
+  validateMasterSecret();
   const isDev = process.env.NODE_ENV !== 'production';
   const app = Fastify({
     logger: {

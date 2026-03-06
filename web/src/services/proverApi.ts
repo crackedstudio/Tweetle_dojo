@@ -2,7 +2,6 @@ import { PROVER_URL } from '../env';
 
 export interface CreateTournamentResponse {
   commitment: string;
-  salt: string;
   wordIndex: number;
   solutionPacked: string;
 }
@@ -33,22 +32,10 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-export async function createTournament(wordIndex?: number): Promise<CreateTournamentResponse> {
+export async function createTournament(tournamentId: number): Promise<CreateTournamentResponse> {
   return apiFetch('/tournament/create', {
     method: 'POST',
-    body: JSON.stringify(wordIndex !== undefined ? { wordIndex } : {}),
-  });
-}
-
-export async function registerTournament(
-  id: number,
-  salt: string,
-  wordIndex: number,
-  commitment: string,
-): Promise<void> {
-  await apiFetch(`/tournament/${id}/register`, {
-    method: 'POST',
-    body: JSON.stringify({ salt, wordIndex, commitment }),
+    body: JSON.stringify({ tournamentId }),
   });
 }
 

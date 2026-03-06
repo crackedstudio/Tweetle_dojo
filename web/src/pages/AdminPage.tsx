@@ -3,7 +3,6 @@ import { useDojo } from '../providers/DojoProvider';
 import { useWallet } from '../providers/WalletProvider';
 import {
   createTournament as proverCreateTournament,
-  registerTournament,
   revealTournament,
 } from '../services/proverApi';
 import { fetchTournaments } from '../dojo/apollo';
@@ -42,31 +41,35 @@ export function AdminPage() {
     clearMessages();
     setIsCreating(true);
     try {
-      // 1. Get commitment from prover server
-      const proverResult = await proverCreateTournament();
+      // 1. Predict next tournament ID from on-chain state
+      const tournaments = await fetchTournaments(100);
+      const maxId = tournaments.length > 0
+        ? Math.max(...tournaments.map((t) => Number(t.tournament_id)))
+        : 0;
+      const predictedId = maxId + 1;
 
-      // 2. Create tournament on-chain
-      // create_tournament(commitment, entry_fee: u256, max_players, start_time, end_time)
-      // u256 is split into (low, high) — entry_fee = 0 for free tournaments
+      // 2. Get commitment from prover server using predicted ID
+      const proverResult = await proverCreateTournament(predictedId);
+
+      // 3. Create tournament on-chain
       const now = Math.floor(Date.now() / 1000);
       await client.tournament_manager.createTournament(
         account,
         proverResult.commitment,
-        0,                      // entry_fee (u256, Dojo handles split)
+        0,                      // entry_fee
         Number(maxPlayers),
-        now,                    // start_time (now)
-        now + 86400,            // end_time (24h from now)
+        now,                    // start_time
+        now + 86400,            // end_time (24h)
       );
 
-      // 3. Poll Torii until the new tournament (matching commitment) is indexed
-      // Noir computes on BN254 (254-bit) but Starknet stores as felt252.
-      // The on-chain value = commitment % STARK_PRIME.
+      // 4. Poll Torii until the new tournament is indexed and verify ID matches
+      let tid: number | null = null;
       const STARK_PRIME = 2n ** 251n + 17n * 2n ** 192n + 1n;
       const commitmentFelt = BigInt(proverResult.commitment) % STARK_PRIME;
-      let tid: number | null = null;
+
       for (let attempt = 0; attempt < 30; attempt++) {
-        const tournaments = await fetchTournaments(20);
-        const match = tournaments.find((t) => {
+        const latest = await fetchTournaments(20);
+        const match = latest.find((t) => {
           try {
             return BigInt(t.solution_commitment) === commitmentFelt;
           } catch {
@@ -81,13 +84,13 @@ export function AdminPage() {
       }
       if (tid === null) throw new Error('Tournament not found in Torii after 60s');
 
-      // 4. Register with prover server
-      await registerTournament(
-        tid,
-        proverResult.salt,
-        proverResult.wordIndex,
-        proverResult.commitment,
-      );
+      if (tid !== predictedId) {
+        setError(
+          `Tournament ID mismatch: predicted ${predictedId} but got ${tid}. ` +
+          `Another tournament may have been created concurrently. The tournament was created but the server derives a different word for ID ${tid}. Please verify.`
+        );
+        return;
+      }
 
       setCreateResult(`Tournament #${tid} created successfully!`);
       setSuccess(`Tournament #${tid} created! Now activate it when ready.`);
@@ -127,7 +130,6 @@ export function AdminPage() {
       const reveal = await revealTournament(Number(endId));
 
       // 2. End tournament on-chain
-      // end_tournament(tournament_id, solution_index: u32, solution_salt: felt252)
       await client.tournament_manager.endTournament(
         account,
         Number(endId),
@@ -162,7 +164,7 @@ export function AdminPage() {
       <section className="bg-bg-surface rounded-xl p-5 border border-tile-border mb-4">
         <h2 className="font-heading text-lg text-text-primary mb-3">Create Tournament</h2>
         <p className="text-text-secondary text-sm mb-4">
-          Creates a new tournament with a random word. The prover server generates the commitment.
+          Creates a new tournament with a deterministically derived word. The server generates the commitment.
         </p>
         <div className="flex gap-3 items-end">
           <div className="flex-1">
