@@ -6,6 +6,7 @@ import type { TileData, TileState } from '../dojo/models';
 import { WordleBoard } from '../components/WordleBoard';
 import { Keyboard } from '../components/Keyboard';
 import { GameOverModal } from '../components/GameOverModal';
+import { HowToPlayModal, useHowToPlay, HowToPlayButton } from '../components/HowToPlayModal';
 import { ChevronRight } from 'lucide-react';
 
 const COLS = 5;
@@ -33,6 +34,7 @@ export function ClassicGamePage() {
   const navigate = useNavigate();
   const { account } = useWallet();
   const { resumeOrStartGame, resumeGame, submitGuess, startGame } = useGameActions();
+  const { isOpen: isHowToPlayOpen, open: openHowToPlay, close: closeHowToPlay } = useHowToPlay();
 
   const [gameId, setGameId] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<TileData[][]>([]);
@@ -180,10 +182,10 @@ export function ClassicGamePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-bg-surface/40 backdrop-blur-md px-4 py-4 border-b border-white/5 shadow-lg relative">
+      <div className="bg-bg-surface/40 backdrop-blur-md px-4 py-4 border-b border-white/5 shadow-lg relative flex items-center justify-between">
         <button
           onClick={() => navigate('/classic')}
-          className="absolute left-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-accent transition-all cursor-pointer group"
+          className="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-text-secondary hover:text-accent transition-all cursor-pointer group"
         >
           <ChevronRight className="w-5 h-5 rotate-180 group-hover:-translate-x-1 transition-transform" />
         </button>
@@ -193,6 +195,7 @@ export function ClassicGamePage() {
             <p className="text-accent text-[10px] font-heading tracking-[0.3em] mt-1 opacity-80 uppercase">Game #{gameId}</p>
           )}
         </div>
+        <HowToPlayButton onClick={openHowToPlay} />
       </div>
 
       {isLoading && (
@@ -218,7 +221,7 @@ export function ClassicGamePage() {
       </div>
 
       {/* Keyboard */}
-      <div className="pb-4 max-w-lg mx-auto w-full">
+      <div className="lg:pb-6 pb-32 max-w-lg mx-auto w-full sticky bottom-0 lg:static lg:bottom-auto">
         <Keyboard
           keyStates={keyStates}
           onKeyPress={handleKeyPress}
@@ -240,6 +243,9 @@ export function ClassicGamePage() {
           playNextLabel="Play Next"
         />
       )}
+
+      {/* How To Play Modal */}
+      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={closeHowToPlay} />
     </div>
   );
 }

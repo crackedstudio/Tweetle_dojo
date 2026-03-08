@@ -98,37 +98,37 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col pb-28 lg:pb-0">
+      <main className="flex-1 flex flex-col pb-20 lg:pb-0">
         {children}
       </main>
 
       {/* Bottom Nav (Mobile Only) */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-6 pb-8 pt-2">
-        <div className="max-w-md mx-auto bg-[#0A161A]/95 backdrop-blur-3xl rounded-[2.5rem] border border-white/10 shadow-[0_-15px_50px_rgba(0,0,0,0.8)] flex items-center justify-between py-3 px-6">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 px-4 pb-3 pt-1">
+        <div className="max-w-md mx-auto bg-[#0A161A]/95 backdrop-blur-3xl rounded-[2rem] border border-white/10 shadow-[0_-10px_40px_rgba(0,0,0,0.8)] flex items-center justify-between py-2 px-4">
           {NAV_LINKS.filter(link => link.path !== '/admin').map(({ path, label, Icon }) => {
             const isActive = location.pathname === path;
             return (
               <Link
                 key={path}
                 to={path}
-                className="flex flex-col items-center gap-1.5 no-underline group relative flex-1"
+                className="flex flex-col items-center gap-1 no-underline group relative flex-1"
               >
                 <div className={`
-                  w-12 h-12 rounded-full flex items-center justify-center transition-all duration-300
+                  w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300
                   ${isActive 
-                    ? 'bg-brand shadow-[0_0_15px_rgba(58,176,255,0.3)]' 
+                    ? 'bg-brand shadow-[0_0_12px_rgba(58,176,255,0.3)]' 
                     : 'bg-[#14232B] border border-white/5'}
                 `}>
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-secondary' : 'text-brand'}`} />
+                  <Icon className={`w-4 h-4 ${isActive ? 'text-secondary' : 'text-brand'}`} />
                 </div>
                 <span className={`
-                  text-[9px] font-heading tracking-widest uppercase transition-all duration-300
+                  text-[8px] font-heading tracking-widest uppercase transition-all duration-300
                   ${isActive ? 'text-brand opacity-100 font-bold' : 'text-text-secondary opacity-50'}
                 `}>
                   {label}
                 </span>
                 {isActive && (
-                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 bg-brand rounded-full shadow-[0_0_10px_#3fbaff] animate-pulse" />
+                  <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-0.5 bg-brand rounded-full shadow-[0_0_8px_#3fbaff] animate-pulse" />
                 )}
               </Link>
             );

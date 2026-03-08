@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useWallet } from '../providers/WalletProvider';
 import { Sparkles, Target, Trophy } from 'lucide-react';
+import { HowToPlayModal, useHowToPlay, HowToPlayButton } from '../components/HowToPlayModal';
 
 const PREVIEW_TILES = [
   { letter: 'T', state: 'correct' },
@@ -19,6 +20,7 @@ const TILE_COLORS: Record<string, string> = {
 export function DashboardPage() {
   const navigate = useNavigate();
   const { account, username, address } = useWallet();
+  const { isOpen: isHowToPlayOpen, open: openHowToPlay, close: closeHowToPlay } = useHowToPlay();
 
   const displayName = username || (address ? `${address.slice(0, 6)}...${address.slice(-4)}` : '');
 
@@ -36,9 +38,14 @@ export function DashboardPage() {
         </div>
         <div className="text-center w-full px-4 mt-8 lg:mt-12">
           <img src="/tweetle-name.png" alt="Tweetle" className="h-24 md:h-40 lg:h-56 object-contain mx-auto mb-10 drop-shadow-[0_0_40px_rgba(58,176,255,0.4)]" />
-          <p className="text-accent text-[10px] lg:text-sm font-heading tracking-[0.3em] lg:tracking-[0.4em] uppercase opacity-90 mb-8 px-5 lg:px-8 py-2.5 rounded-full border border-white/10 inline-block bg-secondary/40 backdrop-blur-md shadow-2xl">
+          <p className="text-accent text-[10px] lg:text-sm font-heading tracking-[0.3em] lg:tracking-[0.4em] uppercase opacity-90 mb-5 px-5 lg:px-8 py-2.5 rounded-full border border-white/10 inline-block bg-secondary/40 backdrop-blur-md shadow-2xl">
             GUESS THE WORD • SKILL PROVEN
           </p>
+          
+          {/* How To Play Button */}
+          <div className="flex justify-center mb-6">
+            <HowToPlayButton onClick={openHowToPlay} />
+          </div>
           
           {account && (
             <div className="inline-flex items-center gap-4 px-6 lg:px-8 py-3.5 lg:py-4 rounded-[2rem] lg:rounded-[2.5rem] bg-secondary/60 backdrop-blur-2xl border-2 border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.4)] relative group overflow-hidden">
@@ -126,6 +133,9 @@ export function DashboardPage() {
           </button>
         </div>
       </div>
+
+      {/* How To Play Modal */}
+      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={closeHowToPlay} />
     </div>
   );
 }

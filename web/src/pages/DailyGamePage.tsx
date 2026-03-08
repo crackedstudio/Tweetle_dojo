@@ -6,6 +6,7 @@ import type { TileData, TileState } from '../dojo/models';
 import { WordleBoard } from '../components/WordleBoard';
 import { Keyboard } from '../components/Keyboard';
 import { GameOverModal } from '../components/GameOverModal';
+import { HowToPlayModal, useHowToPlay, HowToPlayButton } from '../components/HowToPlayModal';
 import { Trophy, Ghost } from 'lucide-react';
 
 const COLS = 5;
@@ -128,6 +129,7 @@ export function DailyGamePage() {
   const navigate = useNavigate();
   const { account } = useWallet();
   const { checkDailyStatus, startDailyGame, submitDailyGuess } = useGameActions();
+  const { isOpen: isHowToPlayOpen, open: openHowToPlay, close: closeHowToPlay } = useHowToPlay();
 
   const [gameId, setGameId] = useState<number | null>(null);
   const [guesses, setGuesses] = useState<TileData[][]>([]);
@@ -273,9 +275,13 @@ export function DailyGamePage() {
   return (
     <div className="flex-1 flex flex-col">
       {/* Header */}
-      <div className="bg-bg-surface/40 backdrop-blur-sm px-4 py-3 text-center border-b border-tile-border/30">
-        <h2 className="font-heading text-base text-text-primary">Daily Challenge</h2>
-        <p className="text-accent text-xs font-semibold tracking-[2px]">ONE WORD PER DAY</p>
+      <div className="bg-bg-surface/40 backdrop-blur-sm px-4 py-3 border-b border-tile-border/30 flex items-center justify-between">
+        <div />
+        <div className="text-center">
+          <h2 className="font-heading text-base text-text-primary">Daily Challenge</h2>
+          <p className="text-accent text-xs font-semibold tracking-[2px]">ONE WORD PER DAY</p>
+        </div>
+        <HowToPlayButton onClick={openHowToPlay} />
       </div>
 
       {isLoading && (
@@ -301,7 +307,7 @@ export function DailyGamePage() {
       </div>
 
       {/* Keyboard */}
-      <div className="pb-4 max-w-lg mx-auto w-full">
+      <div className="lg:pb-6 pb-32 max-w-lg mx-auto w-full sticky bottom-0 lg:static lg:bottom-auto">
         <Keyboard
           keyStates={keyStates}
           onKeyPress={handleKeyPress}
@@ -310,7 +316,7 @@ export function DailyGamePage() {
         />
       </div>
 
-      {/* Modal */}
+      {/* Game Over Modal */}
       {gameOver && (
         <GameOverModal
           isOpen={showModal}
@@ -323,6 +329,9 @@ export function DailyGamePage() {
           playNextLabel="See Countdown"
         />
       )}
+
+      {/* How To Play Modal */}
+      <HowToPlayModal isOpen={isHowToPlayOpen} onClose={closeHowToPlay} />
     </div>
   );
 }
